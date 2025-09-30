@@ -1,0 +1,166 @@
+-- ⚡ Script Fix Lag + FPS/Ping GUI + Gradient Credit
+-- LocalScript - StarterPlayerScripts
+
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
+local Settings = settings()
+
+-- =====================
+-- ⚡ Fix Lag
+-- =====================
+
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 1e10
+Lighting.Brightness = 1
+
+for _, v in pairs(Workspace:GetDescendants()) do
+	if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+		v.Enabled = false
+	elseif v:IsA("Explosion") then
+		v.Visible = false
+	elseif v:IsA("Fire") or v:IsA("Smoke") then
+		v.Enabled = false
+	end
+end
+
+pcall(function() sethiddenproperty(Workspace.Terrain, "Decoration", false) end)
+Workspace.Terrain.WaterWaveSize = 0
+Workspace.Terrain.WaterWaveSpeed = 0
+Workspace.Terrain.WaterReflectance = 0
+Workspace.Terrain.WaterTransparency = 0.8
+
+Settings.Rendering.QualityLevel = Enum.QualityLevel.Level01
+
+pcall(function()
+	Settings.Network.IncomingReplicationLag = 0 
+	Settings.Network.ExperimentalPhysicsEnabled = false
+end)
+
+pcall(function()
+	Workspace.StreamingEnabled = false
+end)
+
+print("✅ Fix Lag đã bật")
+
+-- =====================
+-- 📊 GUI FPS + Ping
+-- =====================
+
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Name = "LagFixStats"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Khung chính
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 160, 0, 95) -- tăng chiều cao để có chỗ cho chữ by cat wljz
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundTransparency = 0.2
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = frame
+
+-- FPS label
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(1, -20, 0, 25)
+fpsLabel.Position = UDim2.new(0, 10, 0, 8)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Text = "FPS: ..."
+fpsLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+fpsLabel.TextStrokeTransparency = 0.3
+fpsLabel.Font = Enum.Font.SourceSansBold
+fpsLabel.TextSize = 20
+fpsLabel.Parent = frame
+
+-- Ping label
+local pingLabel = fpsLabel:Clone()
+pingLabel.Position = UDim2.new(0, 10, 0, 38)
+pingLabel.Text = "Ping: ..."
+pingLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+pingLabel.Parent = frame
+
+-- Credit label (gradient)
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Size = UDim2.new(1, -20, 0, 20)
+creditLabel.Position = UDim2.new(0, 10, 0, 68)
+creditLabel.BackgroundTransparency = 1
+creditLabel.Text = "by cat wljz"
+creditLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+creditLabel.TextStrokeTransparency = 0.5
+creditLabel.Font = Enum.Font.SourceSansBold
+creditLabel.TextSize = 14
+creditLabel.Parent = frame
+
+-- Gradient effect
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),   -- đỏ
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)), -- xanh lá
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0,170,255))  -- xanh dương
+}
+gradient.Rotation = 0
+gradient.Parent = creditLabel
+
+-- Animation gradient
+task.spawn(function()
+	while true do
+		for i = 0, 360, 2 do
+			gradient.Rotation = i
+			task.wait(0.05)
+		end
+	end
+end)
+
+-- =====================
+-- 🔄 Cập nhật FPS & Ping
+-- =====================
+
+local lastUpdate = 0
+RunService.RenderStepped:Connect(function(dt)
+	-- FPS
+	local fps = math.floor(1 / math.max(dt, 0.0001))
+	fpsLabel.Text = "FPS: " .. fps
+
+	if fps >= 60 then
+		fpsLabel.TextColor3 = Color3.fromRGB(0, 255, 0) -- xanh
+	elseif fps >= 30 then
+		fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 0) -- vàng
+	else
+		fpsLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- đỏ
+	end
+
+	-- Ping (update mỗi 0.5s)
+	if tick() - lastUpdate > 0.5 then
+		local netStats = Stats.Network.ServerStatsItem and Stats.Network.ServerStatsItem["Data Ping"]
+		local ping = nil
+		if netStats then
+			ping = math.floor(netStats:GetValue())
+		end
+
+		if ping then
+			pingLabel.Text = "Ping: " .. ping .. " ms"
+			if ping < 100 then
+				pingLabel.TextColor3 = Color3.fromRGB(0, 255, 0) -- xanh
+			elseif ping < 200 then
+				pingLabel.TextColor3 = Color3.fromRGB(255, 255, 0) -- vàng
+			else
+				pingLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- đỏ
+			end
+		else
+			pingLabel.Text = "Ping: N/A"
+			pingLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+		end
+
+		lastUpdate = tick()
+	end
+end)
