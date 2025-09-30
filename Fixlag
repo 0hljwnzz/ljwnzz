@@ -1,1 +1,56 @@
 
+-- Khi bấm nút Fix Lag
+local clicked = false
+local connection
+connection = button.MouseButton1Click:Connect(function()
+	if clicked then return end
+	clicked = true
+
+	button.Text = "Success!"
+	button.BackgroundColor3 = Color3.fromRGB(0,200,0)
+	button.AutoButtonColor = false -- tắt hiệu ứng hover/click
+
+	_G.Ignore = {}  
+	_G.Settings = {  
+		Players = {["Ignore Me"]=true,["Ignore Others"]=true,["Ignore Tools"]=true},  
+		Meshes = {NoMesh=false,NoTexture=false,Destroy=false},  
+		Images = {Invisible=true,Destroy=false},  
+		Explosions = {Smaller=true,Invisible=false,Destroy=false},  
+		Particles = {Invisible=true,Destroy=false},  
+		TextLabels = {LowerQuality=true,Invisible=false,Destroy=false},  
+		MeshParts = {LowerQuality=true,Invisible=false,NoTexture=false,NoMesh=false,Destroy=false},  
+		Other = {  
+			["FPS Cap"]=360,  
+			["No Camera Effects"]=true,  
+			["No Clothes"]=true,  
+			["Low Water Graphics"]=true,  
+			["No Shadows"]=true,  
+			["Low Rendering"]=true,  
+			["Low Quality Parts"]=true,  
+			["Low Quality Models"]=true,  
+			["Reset Materials"]=true  
+		}  
+	}  
+
+	-- ⚡ Nếu muốn thì add booster ngoài đây
+	-- loadstring(game:HttpGet("..."))()
+
+	-- Xóa badge/notification cũ
+	for _, g in pairs(game.CoreGui:GetChildren()) do  
+		if g:IsA("ScreenGui") and (g.Name:match("Badge") or g.Name:match("Notification")) then  
+			g:Destroy()  
+		end  
+	end  
+
+	-- Xóa notification mới khi xuất hiện
+	game.CoreGui.ChildAdded:Connect(function(child)  
+		if child:IsA("ScreenGui") and (child.Name:match("Badge") or child.Name:match("Notification")) then  
+			child:Destroy()  
+		end  
+	end)  
+
+	-- Sau khi chạy xong thì ngắt sự kiện click để không bấm lần 2
+	if connection then
+		connection:Disconnect()
+	end
+end)
